@@ -44,7 +44,7 @@ export default function AppLayout() {
       </Sider>
       <Layout>
         <Header style={{ background: "#fff", padding: "0 24px" }}>
-          <span style={{ fontSize: 16 }}>Александр Грушев</span>
+          <span style={{ fontSize: 16 }}>Александр Яблоков</span>
         </Header>
         <Content style={{ margin: 24 }}>
           <Outlet />
