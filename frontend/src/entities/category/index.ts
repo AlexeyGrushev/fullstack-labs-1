@@ -15,6 +15,7 @@ export const mockCategories: Category[] = [
   { id: 4, name: "Транспорт", type: "expense" },
   { id: 5, name: "Развлечения", type: "expense" },
   { id: 6, name: "Коммунальные платежи", type: "expense" },
+  { id: 7, name: "Образование", type: "expense" },
 ];
 
 export function fetchCategories(simulateError = false): Promise<Category[]> {
