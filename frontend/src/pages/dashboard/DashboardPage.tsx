@@ -1,24 +1,32 @@
+import { useState } from "react";
 import { Card, Col, Row, Statistic, Table, Typography } from "antd";
 import { ArrowDownOutlined, ArrowUpOutlined } from "@ant-design/icons";
-import { mockAccounts, mockCategories, mockTransactions } from "../mocks/finance";
+import { mockAccounts } from "../../entities/account";
+import { mockCategories } from "../../entities/category";
+import { mockTransactions } from "../../entities/transaction";
+import { formatMoney } from "../../shared/lib/format";
 
 const { Title } = Typography;
 
-export default function Dashboard() {
-  const totalBalance = mockAccounts.reduce((sum, a) => sum + a.balance, 0);
-  const totalIncome = mockTransactions
+export default function DashboardPage() {
+  const [accounts] = useState(mockAccounts);
+  const [categories] = useState(mockCategories);
+  const [transactions] = useState(mockTransactions);
+
+  const totalBalance = accounts.reduce((sum, a) => sum + a.balance, 0);
+  const totalIncome = transactions
     .filter((t) => t.type === "income")
     .reduce((sum, t) => sum + t.amount, 0);
-  const totalExpense = mockTransactions
+  const totalExpense = transactions
     .filter((t) => t.type === "expense")
     .reduce((sum, t) => sum + t.amount, 0);
 
-  const recent = [...mockTransactions]
+  const recent = [...transactions]
     .sort((a, b) => (a.date < b.date ? 1 : -1))
     .slice(0, 5)
     .map((t) => ({
       ...t,
-      categoryName: mockCategories.find((c) => c.id === t.categoryId)?.name,
+      categoryName: categories.find((c) => c.id === t.categoryId)?.name,
     }));
 
   return (
@@ -35,7 +43,6 @@ export default function Dashboard() {
             <Statistic
               title="Доходы за период"
               value={totalIncome}
-              precision={0}
               valueStyle={{ color: "#3f8600" }}
               prefix={<ArrowUpOutlined />}
               suffix="₽"
@@ -47,7 +54,6 @@ export default function Dashboard() {
             <Statistic
               title="Расходы за период"
               value={totalExpense}
-              precision={0}
               valueStyle={{ color: "#cf1322" }}
               prefix={<ArrowDownOutlined />}
               suffix="₽"
@@ -73,7 +79,7 @@ export default function Dashboard() {
             render: (value: number, record) => (
               <span style={{ color: record.type === "income" ? "#3f8600" : "#cf1322" }}>
                 {record.type === "income" ? "+" : "-"}
-                {value.toLocaleString("ru-RU")} ₽
+                {formatMoney(value)}
               </span>
             ),
           },

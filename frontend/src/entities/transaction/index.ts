@@ -1,19 +1,14 @@
-import type { Account, Category, Transaction } from "../types/finance";
+import type { TransactionType } from "../category";
 
-export const mockAccounts: Account[] = [
-  { id: 1, name: "Основная карта", currency: "RUB", balance: 54200 },
-  { id: 2, name: "Наличные", currency: "RUB", balance: 3100 },
-  { id: 3, name: "Накопительный счёт", currency: "RUB", balance: 128000 },
-];
-
-export const mockCategories: Category[] = [
-  { id: 1, name: "Зарплата", type: "income" },
-  { id: 2, name: "Подработка", type: "income" },
-  { id: 3, name: "Продукты", type: "expense" },
-  { id: 4, name: "Транспорт", type: "expense" },
-  { id: 5, name: "Развлечения", type: "expense" },
-  { id: 6, name: "Коммунальные платежи", type: "expense" },
-];
+export interface Transaction {
+  id: number;
+  accountId: number;
+  categoryId: number;
+  type: TransactionType;
+  amount: number;
+  description: string;
+  date: string;
+}
 
 export const mockTransactions: Transaction[] = [
   {
@@ -71,3 +66,7 @@ export const mockTransactions: Transaction[] = [
     date: "2026-09-05",
   },
 ];
+
+export function nextTransactionId(transactions: Transaction[]): number {
+  return Math.max(0, ...transactions.map((t) => t.id)) + 1;
+}
