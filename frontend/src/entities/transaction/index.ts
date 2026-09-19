@@ -1,3 +1,4 @@
+import { withDelayedFailure } from "../../shared/lib/mockDelay";
 import type { TransactionType } from "../category";
 
 export interface Transaction {
@@ -66,6 +67,10 @@ export const mockTransactions: Transaction[] = [
     date: "2026-09-05",
   },
 ];
+
+export function fetchTransactions(simulateError = false): Promise<Transaction[]> {
+  return withDelayedFailure(mockTransactions, simulateError);
+}
 
 export function nextTransactionId(transactions: Transaction[]): number {
   return Math.max(0, ...transactions.map((t) => t.id)) + 1;
