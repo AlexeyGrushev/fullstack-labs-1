@@ -17,7 +17,7 @@ const menuItems: MenuProps["items"] = [
   { key: "/categories", icon: <TagsOutlined />, label: "Категории" },
 ];
 
-export default function AppLayout() {
+export function AppLayout() {
   const navigate = useNavigate();
   const location = useLocation();
 
