@@ -4,6 +4,7 @@ import { BugOutlined, PlusOutlined } from "@ant-design/icons";
 import { fetchAccounts, nextAccountId, type Account } from "../../entities/account";
 import { useAsyncResource } from "../../shared/lib/useAsyncResource";
 import { AsyncState } from "../../shared/ui/AsyncState";
+import { FadeIn } from "../../shared/ui/FadeIn";
 import { formatMoney } from "../../shared/lib/format";
 import { CreateAccountForm } from "../../features/create-account/CreateAccountForm";
 
@@ -52,17 +53,19 @@ export default function AccountsPage() {
         emptyText="Счета ещё не добавлены"
         onRetry={reload}
       >
-        <Row gutter={[16, 16]}>
-          {accounts.map((account) => (
-            <Col xs={24} sm={12} md={8} key={account.id}>
-              <Card title={account.name}>
-                <Typography.Text strong style={{ fontSize: 20 }}>
-                  {formatMoney(account.balance, account.currency)}
-                </Typography.Text>
-              </Card>
-            </Col>
-          ))}
-        </Row>
+        <FadeIn>
+          <Row gutter={[16, 16]}>
+            {accounts.map((account) => (
+              <Col xs={24} sm={12} md={8} key={account.id}>
+                <Card title={account.name}>
+                  <Typography.Text strong style={{ fontSize: 20 }}>
+                    {formatMoney(account.balance, account.currency)}
+                  </Typography.Text>
+                </Card>
+              </Col>
+            ))}
+          </Row>
+        </FadeIn>
       </AsyncState>
 
       <CreateAccountForm

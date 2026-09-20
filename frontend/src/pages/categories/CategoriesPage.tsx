@@ -4,6 +4,7 @@ import { BugOutlined, PlusOutlined } from "@ant-design/icons";
 import { fetchCategories, nextCategoryId, type Category } from "../../entities/category";
 import { useAsyncResource } from "../../shared/lib/useAsyncResource";
 import { AsyncState } from "../../shared/ui/AsyncState";
+import { FadeIn } from "../../shared/ui/FadeIn";
 import { CreateCategoryForm } from "../../features/create-category/CreateCategoryForm";
 
 const { Title } = Typography;
@@ -51,20 +52,26 @@ export default function CategoriesPage() {
         emptyText="Категории ещё не добавлены"
         onRetry={reload}
       >
-        <Table
-          rowKey="id"
-          dataSource={categories}
-          pagination={false}
-          columns={[
-            { title: "Название", dataIndex: "name" },
-            {
-              title: "Тип",
-              dataIndex: "type",
-              render: (type: Category["type"]) =>
-                type === "income" ? <Tag color="green">Доход</Tag> : <Tag color="red">Расход</Tag>,
-            },
-          ]}
-        />
+        <FadeIn>
+          <Table
+            rowKey="id"
+            dataSource={categories}
+            pagination={false}
+            columns={[
+              { title: "Название", dataIndex: "name" },
+              {
+                title: "Тип",
+                dataIndex: "type",
+                render: (type: Category["type"]) =>
+                  type === "income" ? (
+                    <Tag color="green">Доход</Tag>
+                  ) : (
+                    <Tag color="red">Расход</Tag>
+                  ),
+              },
+            ]}
+          />
+        </FadeIn>
       </AsyncState>
 
       <CreateCategoryForm

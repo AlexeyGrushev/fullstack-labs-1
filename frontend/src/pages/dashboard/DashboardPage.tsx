@@ -6,6 +6,7 @@ import { fetchCategories } from "../../entities/category";
 import { fetchTransactions } from "../../entities/transaction";
 import { useAsyncResource } from "../../shared/lib/useAsyncResource";
 import { AsyncState } from "../../shared/ui/AsyncState";
+import { FadeIn } from "../../shared/ui/FadeIn";
 import { formatMoney } from "../../shared/lib/format";
 
 const { Title } = Typography;
@@ -32,7 +33,9 @@ export default function DashboardPage() {
           <Button
             icon={<BugOutlined />}
             danger={simulateError}
-            onClick={() => setSimulateError((prev) => !prev)}
+            onClick={() => {
+              setSimulateError((prev) => !prev);
+            }}
           >
             {simulateError ? "Ошибка включена" : "Симулировать ошибку"}
           </Button>
@@ -47,7 +50,7 @@ export default function DashboardPage() {
         onRetry={reload}
       >
         {data && (
-          <>
+          <FadeIn>
             <Row gutter={16}>
               <Col xs={24} sm={8}>
                 <Card>
@@ -116,7 +119,7 @@ export default function DashboardPage() {
                 },
               ]}
             />
-          </>
+          </FadeIn>
         )}
       </AsyncState>
     </div>
