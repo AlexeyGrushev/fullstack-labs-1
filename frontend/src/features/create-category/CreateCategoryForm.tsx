@@ -34,11 +34,19 @@ export function CreateCategoryForm({ open, onCancel, onCreate }: CreateCategoryF
         <Form.Item
           name="name"
           label="Название"
-          rules={[{ required: true, message: "Укажите название категории" }]}
+          rules={[
+            { required: true, message: "Укажите название категории" },
+            { min: 2, message: "Минимум 2 символа" },
+          ]}
         >
           <Input placeholder="Например, Продукты" />
         </Form.Item>
-        <Form.Item name="type" label="Тип" initialValue="expense" rules={[{ required: true }]}>
+        <Form.Item
+          name="type"
+          label="Тип"
+          initialValue="expense"
+          rules={[{ required: true, message: "Выберите тип категории" }]}
+        >
           <Select
             options={[
               { value: "income", label: "Доход" },
