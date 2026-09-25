@@ -1,6 +1,6 @@
-import { useCallback, useState } from "react";
-import { Button, Card, Col, Row, Statistic, Table, Tooltip, Typography } from "antd";
-import { ArrowDownOutlined, ArrowUpOutlined, BugOutlined } from "@ant-design/icons";
+import { useCallback } from "react";
+import { Card, Col, Row, Statistic, Table, Typography } from "antd";
+import { ArrowDownOutlined, ArrowUpOutlined } from "@ant-design/icons";
 import { fetchAccounts } from "../../entities/account";
 import { fetchCategories } from "../../entities/category";
 import { fetchTransactions } from "../../entities/transaction";
@@ -12,35 +12,20 @@ import { formatMoney } from "../../shared/lib/format";
 const { Title } = Typography;
 
 export default function DashboardPage() {
-  const [simulateError, setSimulateError] = useState(false);
-
   const loadOverview = useCallback(async () => {
     const [accounts, categories, transactions] = await Promise.all([
-      fetchAccounts(simulateError),
-      fetchCategories(simulateError),
-      fetchTransactions(simulateError),
+      fetchAccounts(),
+      fetchCategories(),
+      fetchTransactions(),
     ]);
     return { accounts, categories, transactions };
-  }, [simulateError]);
+  }, []);
 
   const { data, isLoading, error, reload } = useAsyncResource(loadOverview);
 
   return (
     <div>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <Title level={3}>Обзор</Title>
-        <Tooltip title="Демонстрация состояния ошибки загрузки для лабораторной работы">
-          <Button
-            icon={<BugOutlined />}
-            danger={simulateError}
-            onClick={() => {
-              setSimulateError((prev) => !prev);
-            }}
-          >
-            {simulateError ? "Ошибка включена" : "Симулировать ошибку"}
-          </Button>
-        </Tooltip>
-      </div>
+      <Title level={3}>Обзор</Title>
 
       <AsyncState
         isLoading={isLoading}
@@ -95,14 +80,14 @@ export default function DashboardPage() {
             <Table
               rowKey="id"
               dataSource={[...data.transactions]
-                .sort((a, b) => (a.date < b.date ? 1 : -1))
+                .sort((a, b) => (a.occurred_on < b.occurred_on ? 1 : -1))
                 .slice(0, 5)}
               pagination={false}
               columns={[
-                { title: "Дата", dataIndex: "date" },
+                { title: "Дата", dataIndex: "occurred_on" },
                 {
                   title: "Категория",
-                  dataIndex: "categoryId",
+                  dataIndex: "category_id",
                   render: (categoryId: number) =>
                     data.categories.find((c) => c.id === categoryId)?.name ?? "—",
                 },

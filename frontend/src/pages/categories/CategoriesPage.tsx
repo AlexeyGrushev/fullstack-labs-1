@@ -1,48 +1,72 @@
-import { useCallback, useState } from "react";
-import { Button, Table, Tag, Tooltip, Typography } from "antd";
-import { BugOutlined, PlusOutlined } from "@ant-design/icons";
-import { fetchCategories, nextCategoryId, type Category } from "../../entities/category";
+import { useState } from "react";
+import { Button, Popconfirm, Space, Table, Tag, Typography, message } from "antd";
+import { DeleteOutlined, EditOutlined, PlusOutlined } from "@ant-design/icons";
+import {
+  createCategoryRequest,
+  deleteCategoryRequest,
+  fetchCategories,
+  updateCategoryRequest,
+  type Category,
+  type CategoryInput,
+} from "../../entities/category";
 import { useAsyncResource } from "../../shared/lib/useAsyncResource";
 import { AsyncState } from "../../shared/ui/AsyncState";
 import { FadeIn } from "../../shared/ui/FadeIn";
+import { ApiError } from "../../shared/lib/apiClient";
 import { CreateCategoryForm } from "../../features/create-category/CreateCategoryForm";
 
 const { Title } = Typography;
 
 export default function CategoriesPage() {
-  const [simulateError, setSimulateError] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [localCategories, setLocalCategories] = useState<Category[] | null>(null);
+  const [editingCategory, setEditingCategory] = useState<Category | null>(null);
 
-  const loadCategories = useCallback(() => fetchCategories(simulateError), [simulateError]);
-  const { data, isLoading, error, reload } = useAsyncResource(loadCategories);
+  const { data, isLoading, error, reload } = useAsyncResource(fetchCategories);
+  const categories = data ?? [];
 
-  const categories = localCategories ?? data ?? [];
+  const openCreateModal = () => {
+    setEditingCategory(null);
+    setIsModalOpen(true);
+  };
 
-  const handleCreate = (values: Omit<Category, "id">) => {
-    const newCategory: Category = { id: nextCategoryId(categories), ...values };
-    setLocalCategories([...categories, newCategory]);
-    setIsModalOpen(false);
+  const openEditModal = (category: Category) => {
+    setEditingCategory(category);
+    setIsModalOpen(true);
+  };
+
+  const handleSubmit = async (values: CategoryInput) => {
+    try {
+      if (editingCategory) {
+        await updateCategoryRequest(editingCategory.id, values);
+        message.success("Категория обновлена");
+      } else {
+        await createCategoryRequest(values);
+        message.success("Категория создана");
+      }
+      setIsModalOpen(false);
+      reload();
+    } catch (err) {
+      message.error(err instanceof ApiError ? err.message : "Не удалось сохранить категорию");
+    }
+  };
+
+  const handleDelete = async (id: number) => {
+    try {
+      await deleteCategoryRequest(id);
+      message.success("Категория удалена");
+      reload();
+    } catch (err) {
+      message.error(err instanceof ApiError ? err.message : "Не удалось удалить категорию");
+    }
   };
 
   return (
     <div>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <Title level={3}>Категории</Title>
-        <div style={{ display: "flex", gap: 8 }}>
-          <Tooltip title="Демонстрация состояния ошибки загрузки для лабораторной работы">
-            <Button
-              icon={<BugOutlined />}
-              danger={simulateError}
-              onClick={() => setSimulateError((prev) => !prev)}
-            >
-              {simulateError ? "Ошибка включена" : "Симулировать ошибку"}
-            </Button>
-          </Tooltip>
-          <Button type="primary" icon={<PlusOutlined />} onClick={() => setIsModalOpen(true)}>
-            Добавить категорию
-          </Button>
-        </div>
+        <Button type="primary" icon={<PlusOutlined />} onClick={openCreateModal}>
+          Добавить категорию
+        </Button>
       </div>
 
       <AsyncState
@@ -63,11 +87,24 @@ export default function CategoriesPage() {
                 title: "Тип",
                 dataIndex: "type",
                 render: (type: Category["type"]) =>
-                  type === "income" ? (
-                    <Tag color="green">Доход</Tag>
-                  ) : (
-                    <Tag color="red">Расход</Tag>
-                  ),
+                  type === "income" ? <Tag color="green">Доход</Tag> : <Tag color="red">Расход</Tag>,
+              },
+              {
+                title: "",
+                key: "actions",
+                render: (_, category) => (
+                  <Space>
+                    <Button size="small" icon={<EditOutlined />} onClick={() => openEditModal(category)} />
+                    <Popconfirm
+                      title="Удалить категорию?"
+                      okText="Удалить"
+                      cancelText="Отмена"
+                      onConfirm={() => handleDelete(category.id)}
+                    >
+                      <Button size="small" danger icon={<DeleteOutlined />} />
+                    </Popconfirm>
+                  </Space>
+                ),
               },
             ]}
           />
@@ -76,8 +113,9 @@ export default function CategoriesPage() {
 
       <CreateCategoryForm
         open={isModalOpen}
+        editingCategory={editingCategory}
         onCancel={() => setIsModalOpen(false)}
-        onCreate={handleCreate}
+        onSubmit={handleSubmit}
       />
     </div>
   );

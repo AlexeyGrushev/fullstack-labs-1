@@ -1,65 +1,82 @@
+import { useEffect } from "react";
 import { DatePicker, Form, Input, InputNumber, Modal, Select } from "antd";
 import dayjs from "dayjs";
 import type { Account } from "../../entities/account";
 import type { Category } from "../../entities/category";
-import type { Transaction } from "../../entities/transaction";
+import type { Transaction, TransactionInput } from "../../entities/transaction";
 
-interface CreateTransactionValues {
-  accountId: number;
-  categoryId: number;
+interface TransactionFormValues {
+  account_id: number;
+  category_id: number;
   amount: number;
   description: string;
-  date: dayjs.Dayjs;
+  occurred_on: dayjs.Dayjs;
 }
 
 interface CreateTransactionFormProps {
   open: boolean;
   accounts: Account[];
   categories: Category[];
+  editingTransaction: Transaction | null;
   onCancel: () => void;
-  onCreate: (transaction: Omit<Transaction, "id" | "type">, categoryType: Category["type"]) => void;
+  onSubmit: (values: TransactionInput) => Promise<void> | void;
 }
 
 export function CreateTransactionForm({
   open,
   accounts,
   categories,
+  editingTransaction,
   onCancel,
-  onCreate,
+  onSubmit,
 }: CreateTransactionFormProps) {
-  const [form] = Form.useForm<CreateTransactionValues>();
+  const [form] = Form.useForm<TransactionFormValues>();
 
-  const handleFinish = (values: CreateTransactionValues) => {
-    const category = categories.find((c) => c.id === values.categoryId);
-    if (!category) {
-      return;
+  useEffect(() => {
+    if (!open) return;
+    if (editingTransaction) {
+      form.setFieldsValue({
+        account_id: editingTransaction.account_id,
+        category_id: editingTransaction.category_id,
+        amount: editingTransaction.amount,
+        description: editingTransaction.description,
+        occurred_on: dayjs(editingTransaction.occurred_on),
+      });
+    } else {
+      form.setFieldsValue({
+        account_id: undefined,
+        category_id: undefined,
+        amount: undefined,
+        description: "",
+        occurred_on: dayjs(),
+      });
     }
-    onCreate(
-      {
-        accountId: values.accountId,
-        categoryId: values.categoryId,
-        amount: values.amount,
-        description: values.description,
-        date: values.date.format("YYYY-MM-DD"),
-      },
-      category.type
-    );
+  }, [open, editingTransaction, form]);
+
+  const handleFinish = async (values: TransactionFormValues) => {
+    await onSubmit({
+      account_id: values.account_id,
+      category_id: values.category_id,
+      amount: values.amount,
+      description: values.description,
+      occurred_on: values.occurred_on.format("YYYY-MM-DD"),
+    });
     form.resetFields();
   };
 
   return (
     <Modal
-      title="Новая операция"
+      title={editingTransaction ? "Изменить операцию" : "Новая операция"}
       open={open}
       onCancel={onCancel}
       onOk={() => form.submit()}
-      okText="Создать"
+      okText={editingTransaction ? "Сохранить" : "Создать"}
       cancelText="Отмена"
       destroyOnHidden
     >
       <Form form={form} layout="vertical" onFinish={handleFinish}>
         <Form.Item
-          name="accountId"
+          name="account_id"
           label="Счёт"
           rules={[{ required: true, message: "Выберите счёт" }]}
         >
@@ -69,7 +86,7 @@ export function CreateTransactionForm({
           />
         </Form.Item>
         <Form.Item
-          name="categoryId"
+          name="category_id"
           label="Категория"
           rules={[{ required: true, message: "Выберите категорию" }]}
         >
@@ -104,9 +121,8 @@ export function CreateTransactionForm({
           <Input placeholder="Например, Продукты на неделю" />
         </Form.Item>
         <Form.Item
-          name="date"
+          name="occurred_on"
           label="Дата"
-          initialValue={dayjs()}
           rules={[{ required: true, message: "Укажите дату" }]}
         >
           <DatePicker style={{ width: "100%" }} format="YYYY-MM-DD" />
