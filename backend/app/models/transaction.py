@@ -11,6 +11,7 @@ class Transaction(Base):
     __tablename__ = "transactions"
 
     id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
     account_id: Mapped[int] = mapped_column(ForeignKey("accounts.id"), nullable=False)
     category_id: Mapped[int] = mapped_column(ForeignKey("categories.id"), nullable=False)
     type: Mapped[TransactionType] = mapped_column(

@@ -1,11 +1,17 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
+from app.api.deps import get_current_user
 from app.crud import category as crud_category
 from app.db.session import get_db
+from app.models.user import User
 from app.schemas.category import CategoryCreate, CategoryRead, CategoryUpdate
 
 router = APIRouter(prefix="/categories", tags=["categories"])
+
+
+# Категории — общий справочник: чтение доступно без авторизации,
+# изменение требует авторизации (но не привязано к конкретному владельцу).
 
 
 @router.get("", response_model=list[CategoryRead])
@@ -14,7 +20,11 @@ def list_categories(db: Session = Depends(get_db)):
 
 
 @router.post("", response_model=CategoryRead, status_code=status.HTTP_201_CREATED)
-def create_category(data: CategoryCreate, db: Session = Depends(get_db)):
+def create_category(
+    data: CategoryCreate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
     return crud_category.create_category(db, data)
 
 
@@ -27,7 +37,12 @@ def get_category(category_id: int, db: Session = Depends(get_db)):
 
 
 @router.patch("/{category_id}", response_model=CategoryRead)
-def update_category(category_id: int, data: CategoryUpdate, db: Session = Depends(get_db)):
+def update_category(
+    category_id: int,
+    data: CategoryUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
     category = crud_category.get_category(db, category_id)
     if category is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Категория не найдена")
@@ -35,7 +50,11 @@ def update_category(category_id: int, data: CategoryUpdate, db: Session = Depend
 
 
 @router.delete("/{category_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_category(category_id: int, db: Session = Depends(get_db)):
+def delete_category(
+    category_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
     category = crud_category.get_category(db, category_id)
     if category is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Категория не найдена")
