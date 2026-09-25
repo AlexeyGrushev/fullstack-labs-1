@@ -1,49 +1,73 @@
-import { useCallback, useState } from "react";
-import { Button, Card, Col, Row, Tooltip, Typography } from "antd";
-import { BugOutlined, PlusOutlined } from "@ant-design/icons";
-import { fetchAccounts, nextAccountId, type Account } from "../../entities/account";
+import { useState } from "react";
+import { Button, Card, Col, Popconfirm, Row, Space, Typography, message } from "antd";
+import { DeleteOutlined, EditOutlined, PlusOutlined } from "@ant-design/icons";
+import {
+  createAccountRequest,
+  deleteAccountRequest,
+  fetchAccounts,
+  updateAccountRequest,
+  type Account,
+  type AccountInput,
+} from "../../entities/account";
 import { useAsyncResource } from "../../shared/lib/useAsyncResource";
 import { AsyncState } from "../../shared/ui/AsyncState";
 import { FadeIn } from "../../shared/ui/FadeIn";
 import { formatMoney } from "../../shared/lib/format";
+import { ApiError } from "../../shared/lib/apiClient";
 import { CreateAccountForm } from "../../features/create-account/CreateAccountForm";
 
 const { Title } = Typography;
 
 export default function AccountsPage() {
-  const [simulateError, setSimulateError] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [localAccounts, setLocalAccounts] = useState<Account[] | null>(null);
+  const [editingAccount, setEditingAccount] = useState<Account | null>(null);
 
-  const loadAccounts = useCallback(() => fetchAccounts(simulateError), [simulateError]);
-  const { data, isLoading, error, reload } = useAsyncResource(loadAccounts);
+  const { data, isLoading, error, reload } = useAsyncResource(fetchAccounts);
+  const accounts = data ?? [];
 
-  const accounts = localAccounts ?? data ?? [];
+  const openCreateModal = () => {
+    setEditingAccount(null);
+    setIsModalOpen(true);
+  };
 
-  const handleCreate = (values: Omit<Account, "id">) => {
-    const newAccount: Account = { id: nextAccountId(accounts), ...values };
-    setLocalAccounts([...accounts, newAccount]);
-    setIsModalOpen(false);
+  const openEditModal = (account: Account) => {
+    setEditingAccount(account);
+    setIsModalOpen(true);
+  };
+
+  const handleSubmit = async (values: AccountInput) => {
+    try {
+      if (editingAccount) {
+        await updateAccountRequest(editingAccount.id, values);
+        message.success("Счёт обновлён");
+      } else {
+        await createAccountRequest(values);
+        message.success("Счёт создан");
+      }
+      setIsModalOpen(false);
+      reload();
+    } catch (err) {
+      message.error(err instanceof ApiError ? err.message : "Не удалось сохранить счёт");
+    }
+  };
+
+  const handleDelete = async (id: number) => {
+    try {
+      await deleteAccountRequest(id);
+      message.success("Счёт удалён");
+      reload();
+    } catch (err) {
+      message.error(err instanceof ApiError ? err.message : "Не удалось удалить счёт");
+    }
   };
 
   return (
     <div>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <Title level={3}>Счета</Title>
-        <div style={{ display: "flex", gap: 8 }}>
-          <Tooltip title="Демонстрация состояния ошибки загрузки для лабораторной работы">
-            <Button
-              icon={<BugOutlined />}
-              danger={simulateError}
-              onClick={() => setSimulateError((prev) => !prev)}
-            >
-              {simulateError ? "Ошибка включена" : "Симулировать ошибку"}
-            </Button>
-          </Tooltip>
-          <Button type="primary" icon={<PlusOutlined />} onClick={() => setIsModalOpen(true)}>
-            Добавить счёт
-          </Button>
-        </div>
+        <Button type="primary" icon={<PlusOutlined />} onClick={openCreateModal}>
+          Добавить счёт
+        </Button>
       </div>
 
       <AsyncState
@@ -57,7 +81,27 @@ export default function AccountsPage() {
           <Row gutter={[16, 16]}>
             {accounts.map((account) => (
               <Col xs={24} sm={12} md={8} key={account.id}>
-                <Card title={account.name}>
+                <Card
+                  title={account.name}
+                  extra={
+                    <Space>
+                      <Button
+                        size="small"
+                        icon={<EditOutlined />}
+                        onClick={() => openEditModal(account)}
+                      />
+                      <Popconfirm
+                        title="Удалить счёт?"
+                        description="Все операции по этому счёту тоже будут удалены."
+                        okText="Удалить"
+                        cancelText="Отмена"
+                        onConfirm={() => handleDelete(account.id)}
+                      >
+                        <Button size="small" danger icon={<DeleteOutlined />} />
+                      </Popconfirm>
+                    </Space>
+                  }
+                >
                   <Typography.Text strong style={{ fontSize: 20 }}>
                     {formatMoney(account.balance, account.currency)}
                   </Typography.Text>
@@ -70,8 +114,9 @@ export default function AccountsPage() {
 
       <CreateAccountForm
         open={isModalOpen}
+        editingAccount={editingAccount}
         onCancel={() => setIsModalOpen(false)}
-        onCreate={handleCreate}
+        onSubmit={handleSubmit}
       />
     </div>
   );

@@ -1,33 +1,42 @@
+import { useEffect } from "react";
 import { Form, Input, InputNumber, Modal } from "antd";
-import type { Account } from "../../entities/account";
-
-interface CreateAccountValues {
-  name: string;
-  currency: string;
-  balance: number;
-}
+import type { Account, AccountInput } from "../../entities/account";
 
 interface CreateAccountFormProps {
   open: boolean;
+  editingAccount: Account | null;
   onCancel: () => void;
-  onCreate: (account: Omit<Account, "id">) => void;
+  onSubmit: (values: AccountInput) => Promise<void> | void;
 }
 
-export function CreateAccountForm({ open, onCancel, onCreate }: CreateAccountFormProps) {
-  const [form] = Form.useForm<CreateAccountValues>();
+export function CreateAccountForm({
+  open,
+  editingAccount,
+  onCancel,
+  onSubmit,
+}: CreateAccountFormProps) {
+  const [form] = Form.useForm<AccountInput>();
 
-  const handleFinish = (values: CreateAccountValues) => {
-    onCreate(values);
+  useEffect(() => {
+    if (open) {
+      form.setFieldsValue(
+        editingAccount ?? { name: "", currency: "RUB", balance: 0 }
+      );
+    }
+  }, [open, editingAccount, form]);
+
+  const handleFinish = async (values: AccountInput) => {
+    await onSubmit(values);
     form.resetFields();
   };
 
   return (
     <Modal
-      title="Новый счёт"
+      title={editingAccount ? "Изменить счёт" : "Новый счёт"}
       open={open}
       onCancel={onCancel}
       onOk={() => form.submit()}
-      okText="Создать"
+      okText={editingAccount ? "Сохранить" : "Создать"}
       cancelText="Отмена"
       destroyOnHidden
     >
@@ -45,7 +54,6 @@ export function CreateAccountForm({ open, onCancel, onCreate }: CreateAccountFor
         <Form.Item
           name="currency"
           label="Валюта"
-          initialValue="RUB"
           rules={[
             { required: true, message: "Укажите валюту" },
             { len: 3, message: "Код валюты — 3 буквы, например RUB" },
@@ -56,7 +64,6 @@ export function CreateAccountForm({ open, onCancel, onCreate }: CreateAccountFor
         <Form.Item
           name="balance"
           label="Начальный баланс"
-          initialValue={0}
           rules={[{ required: true, message: "Укажите начальный баланс" }]}
         >
           <InputNumber style={{ width: "100%" }} min={0} />

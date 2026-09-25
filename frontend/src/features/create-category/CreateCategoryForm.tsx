@@ -1,32 +1,40 @@
+import { useEffect } from "react";
 import { Form, Input, Modal, Select } from "antd";
-import type { Category, TransactionType } from "../../entities/category";
-
-interface CreateCategoryValues {
-  name: string;
-  type: TransactionType;
-}
+import type { Category, CategoryInput } from "../../entities/category";
 
 interface CreateCategoryFormProps {
   open: boolean;
+  editingCategory: Category | null;
   onCancel: () => void;
-  onCreate: (category: Omit<Category, "id">) => void;
+  onSubmit: (values: CategoryInput) => Promise<void> | void;
 }
 
-export function CreateCategoryForm({ open, onCancel, onCreate }: CreateCategoryFormProps) {
-  const [form] = Form.useForm<CreateCategoryValues>();
+export function CreateCategoryForm({
+  open,
+  editingCategory,
+  onCancel,
+  onSubmit,
+}: CreateCategoryFormProps) {
+  const [form] = Form.useForm<CategoryInput>();
 
-  const handleFinish = (values: CreateCategoryValues) => {
-    onCreate(values);
+  useEffect(() => {
+    if (open) {
+      form.setFieldsValue(editingCategory ?? { name: "", type: "expense" });
+    }
+  }, [open, editingCategory, form]);
+
+  const handleFinish = async (values: CategoryInput) => {
+    await onSubmit(values);
     form.resetFields();
   };
 
   return (
     <Modal
-      title="Новая категория"
+      title={editingCategory ? "Изменить категорию" : "Новая категория"}
       open={open}
       onCancel={onCancel}
       onOk={() => form.submit()}
-      okText="Создать"
+      okText={editingCategory ? "Сохранить" : "Создать"}
       cancelText="Отмена"
       destroyOnHidden
     >
@@ -41,12 +49,7 @@ export function CreateCategoryForm({ open, onCancel, onCreate }: CreateCategoryF
         >
           <Input placeholder="Например, Продукты" />
         </Form.Item>
-        <Form.Item
-          name="type"
-          label="Тип"
-          initialValue="expense"
-          rules={[{ required: true, message: "Выберите тип категории" }]}
-        >
+        <Form.Item name="type" label="Тип" rules={[{ required: true, message: "Выберите тип категории" }]}>
           <Select
             options={[
               { value: "income", label: "Доход" },

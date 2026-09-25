@@ -1,4 +1,4 @@
-import { withDelayedFailure } from "../../shared/lib/mockDelay";
+import { apiRequest } from "../../shared/lib/apiClient";
 
 export interface Account {
   id: number;
@@ -7,16 +7,26 @@ export interface Account {
   balance: number;
 }
 
-export const mockAccounts: Account[] = [
-  { id: 1, name: "Основная карта", currency: "RUB", balance: 54200 },
-  { id: 2, name: "Наличные", currency: "RUB", balance: 3100 },
-  { id: 3, name: "Накопительный счёт", currency: "RUB", balance: 128000 },
-];
+export type AccountInput = Omit<Account, "id">;
 
-export function fetchAccounts(simulateError = false): Promise<Account[]> {
-  return withDelayedFailure(mockAccounts, simulateError);
+export function fetchAccounts(): Promise<Account[]> {
+  return apiRequest<Account[]>("/accounts");
 }
 
-export function nextAccountId(accounts: Account[]): number {
-  return Math.max(0, ...accounts.map((a) => a.id)) + 1;
+export function createAccountRequest(data: AccountInput): Promise<Account> {
+  return apiRequest<Account>("/accounts", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}
+
+export function updateAccountRequest(id: number, data: AccountInput): Promise<Account> {
+  return apiRequest<Account>(`/accounts/${id}`, {
+    method: "PATCH",
+    body: JSON.stringify(data),
+  });
+}
+
+export function deleteAccountRequest(id: number): Promise<void> {
+  return apiRequest<void>(`/accounts/${id}`, { method: "DELETE" });
 }

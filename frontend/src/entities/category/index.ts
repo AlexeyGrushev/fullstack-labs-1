@@ -1,4 +1,4 @@
-import { withDelayedFailure } from "../../shared/lib/mockDelay";
+import { apiRequest } from "../../shared/lib/apiClient";
 
 export type TransactionType = "income" | "expense";
 
@@ -8,20 +8,26 @@ export interface Category {
   type: TransactionType;
 }
 
-export const mockCategories: Category[] = [
-  { id: 1, name: "Зарплата", type: "income" },
-  { id: 2, name: "Подработка", type: "income" },
-  { id: 3, name: "Продукты", type: "expense" },
-  { id: 4, name: "Транспорт", type: "expense" },
-  { id: 5, name: "Развлечения", type: "expense" },
-  { id: 6, name: "Коммунальные платежи", type: "expense" },
-  { id: 7, name: "Образование", type: "expense" },
-];
+export type CategoryInput = Omit<Category, "id">;
 
-export function fetchCategories(simulateError = false): Promise<Category[]> {
-  return withDelayedFailure(mockCategories, simulateError);
+export function fetchCategories(): Promise<Category[]> {
+  return apiRequest<Category[]>("/categories");
 }
 
-export function nextCategoryId(categories: Category[]): number {
-  return Math.max(0, ...categories.map((c) => c.id)) + 1;
+export function createCategoryRequest(data: CategoryInput): Promise<Category> {
+  return apiRequest<Category>("/categories", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}
+
+export function updateCategoryRequest(id: number, data: CategoryInput): Promise<Category> {
+  return apiRequest<Category>(`/categories/${id}`, {
+    method: "PATCH",
+    body: JSON.stringify(data),
+  });
+}
+
+export function deleteCategoryRequest(id: number): Promise<void> {
+  return apiRequest<void>(`/categories/${id}`, { method: "DELETE" });
 }
