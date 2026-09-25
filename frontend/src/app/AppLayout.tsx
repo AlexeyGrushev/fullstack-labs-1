@@ -1,12 +1,14 @@
 import {
   DashboardOutlined,
+  LogoutOutlined,
   SwapOutlined,
   WalletOutlined,
   TagsOutlined,
 } from "@ant-design/icons";
-import { Layout, Menu } from "antd";
+import { Button, Layout, Menu, Space, Typography } from "antd";
 import type { MenuProps } from "antd";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
+import { useAuth } from "./AuthProvider";
 
 const { Header, Sider, Content } = Layout;
 
@@ -20,6 +22,12 @@ const menuItems: MenuProps["items"] = [
 export function AppLayout() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { user, logout } = useAuth();
+
+  const handleLogout = async () => {
+    await logout();
+    navigate("/login");
+  };
 
   return (
     <Layout style={{ minHeight: "100vh" }}>
@@ -43,8 +51,21 @@ export function AppLayout() {
         />
       </Sider>
       <Layout>
-        <Header style={{ background: "#fff", padding: "0 24px" }}>
-          <span style={{ fontSize: 16 }}>Александр Яблоков</span>
+        <Header
+          style={{
+            background: "#fff",
+            padding: "0 24px",
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+          }}
+        >
+          <Typography.Text style={{ fontSize: 16 }}>{user?.email}</Typography.Text>
+          <Space>
+            <Button icon={<LogoutOutlined />} onClick={handleLogout}>
+              Выйти
+            </Button>
+          </Space>
         </Header>
         <Content style={{ margin: 24 }}>
           <Outlet />
